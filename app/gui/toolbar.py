@@ -1,114 +1,80 @@
 """
 gui/toolbar.py
-The main horizontal toolbar: file ops, page navigation, zoom/fit controls,
-rotate, and a slot for annotation tools (see annotation_toolbar.py, shown
-as a second row when the Annotate tab is active).
+The main toolbar: file ops, page navigation, zoom/fit controls, rotate,
+file tools, and read-aloud controls. Built on FlowToolbar so it always
+wraps to fit the current window width -- fewer rows when the window is
+wide, more when it's narrow -- instead of a fixed row count that can
+either waste space or clip buttons off the edge.
 """
 import tkinter as tk
 from tkinter import ttk
 from app.state.tab_state import FIT_NONE, FIT_WIDTH, FIT_PAGE, FIT_SCREEN
+from app.gui.flow_container import FlowToolbar
 
 
-class Toolbar(tk.Frame):
+class Toolbar(FlowToolbar):
     def __init__(self, parent, actions: dict):
-        """actions: dict mapping action names to callables, e.g. actions['open']()"""
-        super().__init__(parent, bg="#e8e8e8", bd=1, relief="raised")
+        super().__init__(parent, bg="#e8e8e8")
         self.actions = actions
         self._build()
 
-    def _btn(self, parent, text, action_name, width=None):
-        return ttk.Button(
-            parent, text=text, width=width,
-            command=self.actions.get(action_name, lambda: None),
+    def _btn(self, text, action_name, width=None, new_group=False):
+        return self.add_button(
+            text, self.actions.get(action_name, lambda: None), width=width, new_group=new_group,
         )
 
     def _build(self):
-        pad = {"padx": 2, "pady": 3}
+        self._btn("Open", "open_file")
+        self._btn("Save", "save_file")
+        self._btn("Save As", "save_as")
 
-        # Three stacked rows -- with this many buttons, even two rows can
-        # exceed a normal window width and clip the trailing group. Splitting
-        # into three keeps every row comfortably under ~1100px.
-        row1 = tk.Frame(self, bg="#e8e8e8")
-        row1.pack(side="top", fill="x")
-        row2 = tk.Frame(self, bg="#e8e8e8")
-        row2.pack(side="top", fill="x")
-        row3 = tk.Frame(self, bg="#e8e8e8")
-        row3.pack(side="top", fill="x")
+        self._btn("|<", "first_page", width=3, new_group=True)
+        self._btn("<", "prev_page", width=3)
 
-        # --- Row 1: file, navigation, zoom ---
-        file_grp = tk.Frame(row1, bg="#e8e8e8")
-        file_grp.pack(side="left", padx=(4, 8))
-        self._btn(file_grp, "Open", "open_file").pack(side="left", **pad)
-        self._btn(file_grp, "Save", "save_file").pack(side="left", **pad)
-        self._btn(file_grp, "Save As", "save_as").pack(side="left", **pad)
-
-        ttk.Separator(row1, orient="vertical").pack(side="left", fill="y", padx=4, pady=4)
-
-        nav_grp = tk.Frame(row1, bg="#e8e8e8")
-        nav_grp.pack(side="left", padx=8)
-        self._btn(nav_grp, "|<", "first_page", width=3).pack(side="left", **pad)
-        self._btn(nav_grp, "<", "prev_page", width=3).pack(side="left", **pad)
+        entry_frame = tk.Frame(self, bg=self.bg)
         self.page_entry_var = tk.StringVar(value="1")
-        page_entry = ttk.Entry(nav_grp, textvariable=self.page_entry_var, width=5)
-        page_entry.pack(side="left", **pad)
+        page_entry = ttk.Entry(entry_frame, textvariable=self.page_entry_var, width=5)
+        page_entry.pack(side="left")
         page_entry.bind("<Return>", lambda e: self.actions.get("goto_page_entry", lambda v: None)(
             self.page_entry_var.get()))
-        self.page_count_label = tk.Label(nav_grp, text="/ 0", bg="#e8e8e8")
-        self.page_count_label.pack(side="left", **pad)
-        self._btn(nav_grp, ">", "next_page", width=3).pack(side="left", **pad)
-        self._btn(nav_grp, ">|", "last_page", width=3).pack(side="left", **pad)
+        self.page_count_label = tk.Label(entry_frame, text="/ 0", bg=self.bg)
+        self.page_count_label.pack(side="left", padx=(4, 0))
+        self.add_widget(entry_frame)
 
-        ttk.Separator(row1, orient="vertical").pack(side="left", fill="y", padx=4, pady=4)
+        self._btn(">", "next_page", width=3)
+        self._btn(">|", "last_page", width=3)
 
-        zoom_grp = tk.Frame(row1, bg="#e8e8e8")
-        zoom_grp.pack(side="left", padx=8)
-        self._btn(zoom_grp, "-", "zoom_out", width=3).pack(side="left", **pad)
-        self.zoom_label = tk.Label(zoom_grp, text="100%", bg="#e8e8e8", width=6)
-        self.zoom_label.pack(side="left", **pad)
-        self._btn(zoom_grp, "+", "zoom_in", width=3).pack(side="left", **pad)
-        self._btn(zoom_grp, "100%", "zoom_reset", width=5).pack(side="left", **pad)
+        self._btn("-", "zoom_out", width=3, new_group=True)
+        self.zoom_label = tk.Label(self, text="100%", bg=self.bg, width=6)
+        self.add_widget(self.zoom_label)
+        self._btn("+", "zoom_in", width=3)
+        self._btn("100%", "zoom_reset", width=5)
 
         fit_var = tk.StringVar(value=FIT_SCREEN)
         self.fit_combo = ttk.Combobox(
-            zoom_grp, textvariable=fit_var, state="readonly", width=12,
+            self, textvariable=fit_var, state="readonly", width=12,
             values=["Fit Width", "Fit Page", "Fit Screen", "Manual Zoom"],
         )
         self.fit_combo.set("Fit Screen")
-        self.fit_combo.pack(side="left", **pad)
         self.fit_combo.bind("<<ComboboxSelected>>", self._on_fit_selected)
+        self.add_widget(self.fit_combo)
 
-        # --- Row 2: edit, file tools, read aloud ---
-        edit_grp = tk.Frame(row2, bg="#e8e8e8")
-        edit_grp.pack(side="left", padx=(4, 8))
-        self._btn(edit_grp, "Rotate ⟲", "rotate_left").pack(side="left", **pad)
-        self._btn(edit_grp, "Rotate ⟳", "rotate_right").pack(side="left", **pad)
-        self._btn(edit_grp, "Delete Page", "delete_page").pack(side="left", **pad)
-        self._btn(edit_grp, "Undo", "undo").pack(side="left", **pad)
-        self._btn(edit_grp, "Redo", "redo").pack(side="left", **pad)
+        self._btn("Rotate ⟲", "rotate_left", new_group=True)
+        self._btn("Rotate ⟳", "rotate_right")
+        self._btn("Delete Page", "delete_page")
+        self._btn("Undo", "undo")
+        self._btn("Redo", "redo")
 
-        ttk.Separator(row2, orient="vertical").pack(side="left", fill="y", padx=4, pady=4)
+        self._btn("Merge", "merge_dialog", new_group=True)
+        self._btn("Img → PDF", "convert_dialog")
+        self._btn("Compress", "compress_dialog")
+        self._btn("Print", "print_document")
+        self._btn("Dark Mode", "toggle_dark_mode")
 
-        tools_grp = tk.Frame(row2, bg="#e8e8e8")
-        tools_grp.pack(side="left", padx=8)
-        self._btn(tools_grp, "Merge", "merge_dialog").pack(side="left", **pad)
-        self._btn(tools_grp, "Img → PDF", "convert_dialog").pack(side="left", **pad)
-        self._btn(tools_grp, "Compress", "compress_dialog").pack(side="left", **pad)
-
-        # --- Row 3: remaining tools + read aloud / copy ---
-        tools_grp2 = tk.Frame(row3, bg="#e8e8e8")
-        tools_grp2.pack(side="left", padx=(4, 8))
-        self._btn(tools_grp2, "Print", "print_document").pack(side="left", **pad)
-        self._btn(tools_grp2, "Dark Mode", "toggle_dark_mode").pack(side="left", **pad)
-
-        ttk.Separator(row3, orient="vertical").pack(side="left", fill="y", padx=4, pady=4)
-
-        read_grp = tk.Frame(row3, bg="#e8e8e8")
-        read_grp.pack(side="left", padx=8)
-        self._btn(read_grp, "🔊 Read Selection", "read_selection").pack(side="left", **pad)
-        self._btn(read_grp, "🔊 Read Page", "read_page").pack(side="left", **pad)
-        self._btn(read_grp, "⏹ Stop", "stop_reading").pack(side="left", **pad)
-        ttk.Separator(row3, orient="vertical").pack(side="left", fill="y", padx=4, pady=4)
-        self._btn(read_grp, "Copy", "copy_selection").pack(side="left", **pad)
+        self._btn("🔊 Read Selection", "read_selection", new_group=True)
+        self._btn("🔊 Read Page", "read_page")
+        self._btn("⏹ Stop", "stop_reading")
+        self._btn("Copy", "copy_selection")
 
     def _on_fit_selected(self, _event):
         mapping = {
