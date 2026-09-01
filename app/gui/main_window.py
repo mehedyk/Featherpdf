@@ -669,6 +669,7 @@ class MainWindow(tk.Tk):
             "FeatherPDF\n\nA lightweight PDF viewer & toolkit built on "
             "PyMuPDF, Pillow, and Tkinter only -- no heavy GUI framework, "
             "no OpenCV.\n\nSee README.md and WALKTHROUGH.md for full usage."
+            "\n\nLicensed under Attribution-NonCommercial -- see LICENSE."
             "\n\nCreated by Mehedy -- mehedy.netlify.app",
         )
 

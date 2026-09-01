@@ -1,4 +1,9 @@
+<div align="center">
+<img src="assets/icons/logo.gif" width="90" alt="FeatherPDF logo">
+
 # FeatherPDF — Walkthrough
+
+</div>
 
 A guided tour through every feature. Launch the app first:
 
@@ -7,9 +12,18 @@ python main.py
 ```
 
 You'll see a short animated splash, then the main window: menu bar at the
-top, toolbar below it, a second row of annotation tools below that, a
+top, the main toolbar below it, the annotation toolbar below that, a
 sidebar on the left (Pages / Bookmarks / Search tabs), and the main
-viewing area on the right.
+viewing area on the right. Both toolbars auto-wrap their buttons to fit
+however wide your window is — resize the window and you'll see them
+reflow into more or fewer rows automatically, so nothing ever gets
+cut off the edge.
+
+<div align="center">
+<img src="assets/screenshots/screenshot.png" width="700" alt="FeatherPDF main window with a highlighted text selection">
+<br>
+<sub>The main window — text selected and highlighted, thumbnails on the left.</sub>
+</div>
 
 ---
 
@@ -66,7 +80,7 @@ viewing area on the right.
 
 ## 5. Annotating
 
-The second toolbar row is the **annotation toolbar**:
+The **annotation toolbar** (below the main toolbar) handles this:
 
 1. Pick a tool: **Select / Copy** (the default), **Highlight**, **Underline**,
    **Strikeout**, **Sticky Note**, or **Freehand**.
@@ -202,8 +216,20 @@ again. Windows and macOS have one built in already.
   wasteful to shrink.
 - **Print does nothing on Linux**: printing shells out to `lp`; make sure
   a CUPS printer is configured (`lpstat -p` to check).
+- **`pyinstaller: command not found` on Windows** (when building a
+  standalone .exe): pip installed it to a user folder that isn't on your
+  PATH. Run `python -m PyInstaller build/pyinstaller.spec --workpath build/_cache`
+  instead of the bare `pyinstaller` command — see README.md's build
+  section for details (the `--workpath` part avoids a separate issue where
+  PyInstaller's own build cache collides with the checked-in spec file).
 
 ---
 
-FeatherPDF — made by **Mehedy** — [mehedy.netlify.app](https://mehedy.netlify.app)
+<div align="center">
+
+Licensed under Attribution — Non-Commercial (see [LICENSE](LICENSE)) — free to use and modify, just credit the original when you share it.
+
+FeatherPDF — made by **[Mehedy](https://mehedy.netlify.app)**
+
+</div>
 

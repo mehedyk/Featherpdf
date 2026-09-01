@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# PyInstaller build output and cache
+# (PyInstaller's default --workpath is ./build, which collides with this
+#  project's checked-in build/pyinstaller.spec -- see README.md's build
+#  section for the --workpath flag that avoids this)
+/dist/
+/build/pyinstaller/
+/build/*/
+
+# App's own runtime state (recreated automatically on first launch)
+config/settings.json.bak
