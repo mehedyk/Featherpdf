@@ -29,8 +29,30 @@ auto-crop feature. Just a fast, small, no-nonsense PDF app.
 
 ---
 
+## Download
+
+Prebuilt Windows executables are attached to **[GitHub Releases](https://github.com/mehedyk/Featherpdf/releases/latest)**
+— not committed to this repo directly (large binaries bloat git history
+forever, so they live as release attachments instead; see
+[RELEASING.md](RELEASING.md) if you're maintaining this project and need
+to publish a new one).
+
+| I want... | Download | Size |
+|---|---|---|
+| The easiest install — Start Menu shortcut, uninstaller, the works | **[FeatherPDF-Setup.exe](https://github.com/mehedyk/Featherpdf/releases/latest/download/FeatherPDF-Setup.exe)** | ~114 MB |
+| One single file, no install — just run it | **[FeatherPDF-Portable.exe](https://github.com/mehedyk/Featherpdf/releases/latest/download/FeatherPDF-Portable.exe)** | ~52 MB |
+| Auto-Crop working immediately, no separate setup | **[FeatherPDF-AutoCrop.zip](https://github.com/mehedyk/Featherpdf/releases/latest/download/FeatherPDF-AutoCrop.zip)** | ~300 MB |
+
+Not sure which one? Get **FeatherPDF-Setup.exe** — that's the one most
+people want. See [Auto-Crop](#auto-crop-optional) if you're deciding
+whether you need that third option specifically.
+
+
+---
+
 ## Table of contents
 
+- [Download](#download)
 - [Why FeatherPDF](#why-featherpdf)
 - [Features](#features)
 - [Installation](#installation)
@@ -46,10 +68,12 @@ auto-crop feature. Just a fast, small, no-nonsense PDF app.
 
 Most "full-featured" PDF apps ship 150–400 MB of Electron/Qt/Chromium
 just to show you a page. FeatherPDF packs viewing, editing, annotating,
-merging, converting, compressing, and reading-aloud into roughly
-**40–70 MB** — because the entire feature set sits on top of just
-**three** small third-party libraries (plus Tkinter, which ships with
-Python itself):
+merging, converting, compressing, and reading-aloud into a **~114 MB**
+standard build (or **~52 MB** as a single-file executable — see
+[Building a standalone executable](#building-a-standalone-executable) for
+both, with real measured numbers, not marketing estimates) — because the
+entire feature set sits on top of just **three** small third-party
+libraries (plus Tkinter, which ships with Python itself):
 
 <a name="tech-stack"></a>
 
@@ -130,28 +154,45 @@ PyMuPDF's wheel already bundles.
 ### Building a standalone executable
 
 Three build variants are provided, all producing the same app — pick
-based on how you want to share it. **Sizes below are measured, not
-estimated** — built and run all three on a Linux equivalent to confirm
-the numbers and confirm each one actually launches correctly; Windows
-builds land in the same ballpark (PyMuPDF, the biggest single piece at
-~50MB, is cross-platform-identical in size).
+based on how you want to share it. **Sizes below are actually measured**
+(cross-checked with `du` directly, not just estimated) and each variant
+was built and launched to confirm it works:
 
 | Spec file | Output | Measured size | When to use it |
 |---|---|---|---|
-| `pyinstaller.spec` | `dist/FeatherPDF/` (folder + `.exe`) | **~115 MB** | Default choice — pair with the Inno Setup installer below |
+| `pyinstaller.spec` | `dist/FeatherPDF/` (folder + `.exe`) | **~114 MB** | Default choice — pair with the Inno Setup installer below |
 | `pyinstaller-onefile.spec` | `dist/FeatherPDF.exe` (one file) | **~52 MB** | A single truly independent file — email it, put it on a USB stick, done. Slightly slower to *launch* (silently self-extracts to a temp folder each time you run it) |
-| `pyinstaller-with-autocrop.spec` | `dist/FeatherPDF/` (folder + `.exe`) | **~200 MB\*** | Same as the default, but bundles OpenCV so Auto-Crop works immediately for whoever you send it to, no separate install needed on their end |
+| `pyinstaller-with-autocrop.spec` | `dist/FeatherPDF/` (folder + `.exe`) | **~300 MB** | Same as the default, but bundles OpenCV so Auto-Crop works immediately for whoever you send it to, no separate install needed on their end |
 
-\* *That 200MB figure assumes a clean environment with only
-`requirements-optional.txt` installed. If your Python environment also
-has unrelated data-science packages installed (numpy-adjacent tools tend
-to pull in extras), PyInstaller may bundle those too — building in a
-fresh virtual environment with only this project's requirements avoids
-that.*
+That ~300MB is bigger than it might look at first glance: OpenCV's wheel
+vendors its shared libraries in a *separate* companion folder alongside
+the main package, which is easy to undercount if you only check the
+main folder's size (a mistake worth naming since it's exactly the one
+made while writing this doc, then caught and corrected by measuring the
+actual built output rather than trusting the package's apparent size).
+`requirements-optional.txt` pins an exact OpenCV version specifically so
+this number stays predictable — newer OpenCV releases have shipped
+meaningfully larger, so an unpinned `>=` requirement would make this
+figure drift upward over time without any change to this project's code.
 
 **Not sure which one?** Use `pyinstaller.spec` + the installer (next
 section) unless you specifically want either a single-file download or
 Auto-Crop working out of the box for the recipient.
+
+#### Building all three at once
+
+```bash
+python build/build_all.py            # builds all three
+python build/build_all.py onefile    # or just one: standard / onefile / autocrop
+```
+
+This matters more than it sounds like: all three specs produce something
+named `FeatherPDF`, so running the plain PyInstaller commands back-to-back
+would have the second and third builds silently overwrite the first in
+`dist/`. The script moves each variant's output to its own folder under
+`dist_builds/` before starting the next one, so all three survive
+side by side. The `autocrop` variant is skipped automatically (with a
+clear message) if OpenCV isn't installed yet.
 
 ```bash
 pip install pyinstaller
@@ -284,6 +325,7 @@ featherpdf/
 ├── requirements.txt
 ├── requirements-optional.txt # only for Auto-Crop (OpenCV) -- see Auto-Crop section
 ├── LICENSE
+├── RELEASING.md              # maintainer-only: how to build & publish a release
 ├── .gitignore
 ├── config/settings.json     # reference copy of the defaults (not read at
 │                              runtime -- actual settings live in ~/.featherpdf/)
@@ -304,9 +346,10 @@ featherpdf/
 │   ├── generate_logo.py       # regenerates the animated logo (dev-only)
 │   └── generate_icon.py       # regenerates the Windows .ico (dev-only)
 └── build/
-    ├── pyinstaller.spec              # standard build -> dist/FeatherPDF/ (~115MB)
+    ├── pyinstaller.spec              # standard build -> dist/FeatherPDF/ (~114MB)
     ├── pyinstaller-onefile.spec       # single-file build -> dist/FeatherPDF.exe (~52MB)
-    ├── pyinstaller-with-autocrop.spec # standard build, but bundles OpenCV (~200MB)
+    ├── pyinstaller-with-autocrop.spec # standard build, but bundles OpenCV (~300MB)
+    ├── build_all.py                   # builds all three without them overwriting each other
     └── installer.iss                  # packages the standard build into Setup.exe (Inno Setup)
 ```
 

@@ -5,6 +5,10 @@
 # Install with:
 #   pip install -r requirements-optional.txt
 #
-# Adds roughly 90MB -- that's why it's kept separate from requirements.txt
-# rather than bundled by default.
-opencv-python-headless>=4.8.0
+# Pinned (not just >=) on purpose: OpenCV's own package size varies
+# meaningfully between releases (measured 4.13.0 at ~158MB installed vs.
+# a newer 5.0.0 release at ~200MB+ installed, same machine, same day) --
+# pinning keeps "how big is my build going to be" a known, stable answer
+# instead of quietly drifting upward whenever a new OpenCV version ships.
+# Bump this deliberately if you want a newer version.
+opencv-python-headless==4.13.0.92

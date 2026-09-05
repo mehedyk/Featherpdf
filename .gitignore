@@ -11,6 +11,11 @@ __pycache__/
 /build/pyinstaller/
 /build/*/
 
+# build_all.py's combined output for all three variants -- these are the
+# binaries that go to GitHub Releases (see README.md's "Download" section
+# and RELEASING.md), never committed directly to the repo.
+/dist_builds/
+
 # Inno Setup installer output
 /dist_installer/
 
