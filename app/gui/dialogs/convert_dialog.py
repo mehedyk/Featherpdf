@@ -1,18 +1,20 @@
 """
 gui/dialogs/convert_dialog.py
-Pick images, choose scan effect mode and page-size behavior, confirm.
+Pick images, choose scan effect mode, page-size behavior, and optional
+auto-crop/straighten, confirm.
 """
 import tkinter as tk
 from tkinter import ttk, messagebox
 from app.utils.file_dialogs import ask_open_images
 from app.core.scan_effect import MODE_COLOR, MODE_GRAY, MODE_BW
+from app.core.auto_crop import is_available as auto_crop_available
 
 
 class ConvertDialog(tk.Toplevel):
     def __init__(self, parent, on_confirm):
         super().__init__(parent)
         self.title("Images to PDF")
-        self.geometry("420x400")
+        self.geometry("440x460")
         self.on_confirm = on_confirm
         self.paths = []
 
@@ -32,6 +34,32 @@ class ConvertDialog(tk.Toplevel):
         ttk.Button(btn_row, text="Remove", command=self._remove_selected).pack(side="left", padx=2)
         ttk.Button(btn_row, text="Move Up", command=lambda: self._move(-1)).pack(side="left", padx=2)
         ttk.Button(btn_row, text="Move Down", command=lambda: self._move(1)).pack(side="left", padx=2)
+
+        crop_frame = tk.LabelFrame(self, text="Auto-Crop")
+        crop_frame.pack(fill="x", padx=10, pady=6)
+        self._cv2_ok = auto_crop_available()
+        self.auto_crop_var = tk.BooleanVar(value=False)
+        crop_check = ttk.Checkbutton(
+            crop_frame,
+            text="Automatically detect & straighten the document's edges (handles angled photos)",
+            variable=self.auto_crop_var,
+        )
+        crop_check.pack(anchor="w", padx=6, pady=(4, 0))
+        if self._cv2_ok:
+            tk.Label(
+                crop_frame, text="Falls back to the original photo for any image where no\n"
+                                   "confident document edge is found -- never guesses a bad crop.",
+                fg="#555555", justify="left",
+            ).pack(anchor="w", padx=6, pady=(0, 4))
+        else:
+            crop_check.configure(state="disabled")
+            tk.Label(
+                crop_frame,
+                text="Requires OpenCV, which isn't installed:\n"
+                     "    pip install opencv-python-headless\n"
+                     "This is optional -- everything else works without it.",
+                fg="#a03020", justify="left",
+            ).pack(anchor="w", padx=6, pady=(0, 4))
 
         opts = tk.LabelFrame(self, text="Document Style")
         opts.pack(fill="x", padx=10, pady=6)
@@ -90,5 +118,6 @@ class ConvertDialog(tk.Toplevel):
             messagebox.showwarning("Images to PDF", "Add at least one image.")
             return
         scan_mode = None if self.effect_var.get() == "none" else self.effect_var.get()
+        auto_crop = self.auto_crop_var.get() and self._cv2_ok
         self.destroy()
-        self.on_confirm(self.paths, scan_mode, self.size_var.get())
+        self.on_confirm(self.paths, scan_mode, self.size_var.get(), auto_crop)

@@ -11,8 +11,9 @@
 [![Built with](https://img.shields.io/badge/built%20with-PyMuPDF%20%2B%20Pillow%20%2B%20Tkinter-4a90d9)](#tech-stack)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#installation)
 
-Two third-party dependencies. No Qt. No OpenCV. No bundled browser engine.
-Just a fast, small, no-nonsense PDF app.
+Three lightweight core dependencies, one fully optional. No Qt, no
+bundled browser engine, no OpenCV unless you specifically want the
+auto-crop feature. Just a fast, small, no-nonsense PDF app.
 
 **Made by [Mehedy](https://mehedy.netlify.app)**
 
@@ -33,7 +34,9 @@ Just a fast, small, no-nonsense PDF app.
 - [Why FeatherPDF](#why-featherpdf)
 - [Features](#features)
 - [Installation](#installation)
-- [Building a standalone .exe](#building-a-standalone-executable-optional)
+- [Building a standalone executable](#building-a-standalone-executable)
+- [Building a proper installer](#building-a-proper-installer-recommended-for-sharing)
+- [Auto-Crop (optional)](#auto-crop-optional)
 - [Project structure](#project-structure)
 - [Usage](#usage)
 - [Known limitations](#known-limitations)
@@ -44,8 +47,9 @@ Just a fast, small, no-nonsense PDF app.
 Most "full-featured" PDF apps ship 150–400 MB of Electron/Qt/Chromium
 just to show you a page. FeatherPDF packs viewing, editing, annotating,
 merging, converting, compressing, and reading-aloud into roughly
-**40–70 MB** — because the entire feature set sits on top of exactly
-**two** third-party libraries:
+**40–70 MB** — because the entire feature set sits on top of just
+**three** small third-party libraries (plus Tkinter, which ships with
+Python itself):
 
 <a name="tech-stack"></a>
 
@@ -53,9 +57,12 @@ merging, converting, compressing, and reading-aloud into roughly
 |---|---|
 | 🐍 **PyMuPDF** | All PDF logic — rendering, merge/split, text extraction, annotations, search, compression |
 | 🖼️ **Pillow** | Image filters for the scan-effect / CamScanner-style conversion, dark-mode inversion |
+| 🔊 **pyttsx3** | Read Aloud — a thin wrapper that calls your OS's own built-in speech engine, no bundled voice model |
 | 🪟 **Tkinter** | The entire interface — built into Python, zero extra install |
+| 🧠 **OpenCV** *(optional)* | Powers just the Auto-Crop feature — not installed by default, see [Auto-Crop](#auto-crop-optional) |
 
-That's it. No Electron shell, no Chromium, no OpenCV, no Qt runtime.
+That's it. No Electron shell, no Chromium, no Qt runtime — and no OpenCV
+either, unless you specifically opt into Auto-Crop.
 
 ---
 
@@ -92,6 +99,10 @@ That's it. No Electron shell, no Chromium, no OpenCV, no Qt runtime.
   - Color (contrast + sharpen)
   - Grayscale
   - Black & white "scanned document" look (adaptive thresholding, CamScanner-style)
+- **Auto-Crop** *(optional, requires OpenCV)* — automatically detects a
+  photographed document's edges and perspective-corrects it, even at a
+  real skewed angle, straightening it into a clean rectangle before
+  applying the style above. See [Auto-Crop](#auto-crop-optional) below.
 - Compress a PDF by downsampling only the images that exceed a DPI
   threshold — nothing is touched unless it's genuinely higher resolution
   than needed, so there's no visible quality loss
@@ -116,24 +127,48 @@ python main.py
 That's the entire setup. No compilers, no system libraries beyond what
 PyMuPDF's wheel already bundles.
 
-### Building a standalone executable (optional)
+### Building a standalone executable
+
+Three build variants are provided, all producing the same app — pick
+based on how you want to share it. **Sizes below are measured, not
+estimated** — built and run all three on a Linux equivalent to confirm
+the numbers and confirm each one actually launches correctly; Windows
+builds land in the same ballpark (PyMuPDF, the biggest single piece at
+~50MB, is cross-platform-identical in size).
+
+| Spec file | Output | Measured size | When to use it |
+|---|---|---|---|
+| `pyinstaller.spec` | `dist/FeatherPDF/` (folder + `.exe`) | **~115 MB** | Default choice — pair with the Inno Setup installer below |
+| `pyinstaller-onefile.spec` | `dist/FeatherPDF.exe` (one file) | **~52 MB** | A single truly independent file — email it, put it on a USB stick, done. Slightly slower to *launch* (silently self-extracts to a temp folder each time you run it) |
+| `pyinstaller-with-autocrop.spec` | `dist/FeatherPDF/` (folder + `.exe`) | **~200 MB\*** | Same as the default, but bundles OpenCV so Auto-Crop works immediately for whoever you send it to, no separate install needed on their end |
+
+\* *That 200MB figure assumes a clean environment with only
+`requirements-optional.txt` installed. If your Python environment also
+has unrelated data-science packages installed (numpy-adjacent tools tend
+to pull in extras), PyInstaller may bundle those too — building in a
+fresh virtual environment with only this project's requirements avoids
+that.*
+
+**Not sure which one?** Use `pyinstaller.spec` + the installer (next
+section) unless you specifically want either a single-file download or
+Auto-Crop working out of the box for the recipient.
 
 ```bash
 pip install pyinstaller
 python -m PyInstaller build/pyinstaller.spec --workpath build/_cache
+# or: python -m PyInstaller build/pyinstaller-onefile.spec --workpath build/_cache
+# or: python -m PyInstaller build/pyinstaller-with-autocrop.spec --workpath build/_cache
 ```
 
 The `--workpath build/_cache` matters: PyInstaller's own build cache
 defaults to `./build/<specname>/`, which collides with this project's
-`build/pyinstaller.spec` file since they'd share the same `build/` folder.
-Pointing `--workpath` at a subfolder keeps PyInstaller's temporary files
-separate from the checked-in spec — both `build/_cache/` and `dist/` are
-already covered by `.gitignore` and safe to delete any time.
+spec files since they'd share the same `build/` folder. Pointing
+`--workpath` at a subfolder keeps PyInstaller's temporary files separate
+from the checked-in specs — both `build/_cache/` and `dist/` are already
+covered by `.gitignore` and safe to delete any time.
 
-The final app lands in `dist/FeatherPDF/` — that whole folder is what you
-share, not just the `.exe` inside it (it depends on the sibling files next
-to it). See the comments at the top of `build/pyinstaller.spec` for a
-couple of manual size-trimming steps if you want to squeeze it further.
+Every variant already carries the FeatherPDF icon and correctly bundles
+the read-aloud engine's platform driver.
 
 **Windows: `pyinstaller: command not found`?** This is a PATH issue, not a
 missing-install issue — pip installed it, but to your *user* site-packages
@@ -143,10 +178,7 @@ directory usually isn't on PATH. Two ways to fix it:
 
 - **Easiest — skip the PATH entirely:** run it as a Python module instead
   of a standalone command, which always works since `python` itself is
-  already on PATH:
-  ```bash
-  python -m PyInstaller build/pyinstaller.spec --workpath build/_cache
-  ```
+  already on PATH (as in the commands above).
 - **Or add it to PATH properly:** find the folder pip installed into (shown
   in the "Requirement already satisfied" line, typically something like
   `C:\Users\<you>\AppData\Roaming\Python\Python3XX\site-packages`), go up
@@ -154,19 +186,93 @@ directory usually isn't on PATH. Two ways to fix it:
   environment variable. Restart your terminal afterward — PATH changes
   don't apply to already-open shells.
 
-### Sharing the built .exe
+### Building a proper installer (recommended for sharing)
 
-Zip the whole `dist/FeatherPDF/` folder before sending it to anyone:
+`dist/FeatherPDF/` zipped up and sent directly is the #1 cause of "it runs
+on my machine but not others": someone drags just the `.exe` out on its
+own, or only part of the folder makes it through email/Discord/etc., and
+now the `.exe` can't find the `_internal/` files it depends on. A real
+installer avoids this entirely by putting everything in one fixed place
+it controls, plus gives you a proper icon, Start Menu / Desktop shortcuts,
+and a listing in "Apps & Features" for uninstalling.
+
+This project ships `build/installer.iss` for **[Inno Setup](https://jrsoftware.org/isdl.php)**
+(free, the standard tool for this on Windows):
+
+1. Build the PyInstaller output first (previous section) — Inno Setup
+   packages *that*, it doesn't invoke Python itself.
+2. Install Inno Setup, then either open `build/installer.iss` in the Inno
+   Setup Compiler and click **Compile**, or from the command line:
+   ```bash
+   ISCC.exe build\installer.iss
+   ```
+3. The finished installer lands at `dist_installer/FeatherPDF-Setup.exe`
+   — **this single file is what you share.** Recipients run it, click
+   through a normal install wizard (with your icon, your license text
+   from `LICENSE`, a Desktop-icon checkbox, and a finish-screen "Launch
+   now" option), and FeatherPDF appears in their Start Menu — installed
+   correctly, every time, with no manual folder-copying involved.
+
+Inno Setup itself only runs on Windows, so this step happens on a Windows
+machine, same as the PyInstaller build.
+
+### Sharing without an installer (quick and dirty)
+
+**If you built with `pyinstaller-onefile.spec`**, there's nothing to zip —
+`dist/FeatherPDF.exe` is already the one file you send. This is genuinely
+the simplest option if you just want to hand something to one person.
+
+**If you built with the default `pyinstaller.spec`** (onedir), zip the
+**whole** `dist/FeatherPDF/` folder — never just the `.exe`:
 
 ```powershell
 Compress-Archive -Path dist\FeatherPDF -DestinationPath FeatherPDF-Windows.zip
 ```
 
-Recipients unzip it and run `FeatherPDF.exe` directly — no Python or
-install step needed on their end. Unsigned `.exe` files commonly trigger a
-Windows SmartScreen "unrecognized publisher" warning; that's expected for
-an unsigned build, not a sign anything's wrong — tell recipients to click
-"More info → Run anyway."
+Recipients unzip it and run `FeatherPDF.exe` **from inside that folder**
+— moving the `.exe` out on its own will break it (this is precisely what
+the onefile build avoids). This is why the installer route above, or the
+onefile build, is worth it for anything beyond sharing with one
+technical friend who you can walk through "keep the folder together."
+
+Either way, unsigned `.exe` files commonly trigger a Windows SmartScreen
+"unrecognized publisher" warning; that's expected for an unsigned build,
+not a sign anything's wrong — tell recipients to click "More info → Run
+anyway."
+
+---
+
+## Auto-Crop (optional)
+
+<div align="center">
+<img src="assets/screenshots/autocrop_before_after.png" width="700" alt="Auto-crop before/after: a skewed photo of a document straightened into a clean rectangle">
+</div>
+
+The **Images to PDF** dialog has an Auto-Crop checkbox that detects a
+photographed document's edges — even at a real skewed angle, not just a
+flat scan — and perspective-corrects it into a clean, straightened
+rectangle before applying any color/grayscale/B&W style on top.
+
+This is the one feature in FeatherPDF that uses OpenCV, and it's kept
+**fully optional** on purpose: OpenCV alone is roughly 90MB, which would
+nearly triple this app's install size for every single user even if they
+never touch this one checkbox. So it's a separate install:
+
+```bash
+pip install -r requirements-optional.txt
+```
+
+Without it, everything else in the app works exactly as normal — the
+Auto-Crop checkbox just shows as disabled with a note on how to enable it.
+
+How it works, if you're curious: downscale for fast detection → edge
+detection → find the largest 4-sided contour (that's almost always the
+document, since a page's border is the biggest hard edge in a document
+photo) → perspective-warp using the *original* full-resolution corners.
+If no confident 4-sided edge is found (busy background, document edge not
+visible, etc.), it leaves that image untouched rather than guessing a bad
+crop — tested against both an extreme angle and a busy no-document photo
+to confirm the fallback actually holds.
 
 ---
 
@@ -176,22 +282,32 @@ an unsigned build, not a sign anything's wrong — tell recipients to click
 featherpdf/
 ├── main.py                  # entry point (splash screen -> main window)
 ├── requirements.txt
+├── requirements-optional.txt # only for Auto-Crop (OpenCV) -- see Auto-Crop section
 ├── LICENSE
-├── config/settings.json     # persisted preferences
+├── .gitignore
+├── config/settings.json     # reference copy of the defaults (not read at
+│                              runtime -- actual settings live in ~/.featherpdf/)
 ├── app/
 │   ├── core/                # PDF logic only, no GUI (document, merge/split,
-│   │                          convert, scan effects, compression, annotations,
-│   │                          search, metadata, undo/redo, text-to-speech)
+│   │                          convert, scan effects, auto-crop [optional],
+│   │                          compression, annotations, search, metadata,
+│   │                          undo/redo, text-to-speech)
 │   ├── render/               # page -> image rendering + LRU caches
 │   ├── state/                # app-wide and per-tab state
 │   ├── gui/                  # all Tkinter windows, dialogs, toolbars,
 │   │                           flow-layout container
 │   └── utils/                 # file dialogs, shortcuts, printing, logging
 ├── assets/
-│   ├── icons/                 # the animated logo + generated frames
+│   ├── icons/                 # animated logo, generated frames, icon.ico
 │   └── screenshots/            # README demo GIF + static screenshot
-├── tools/generate_logo.py     # regenerates the logo assets (dev-only)
-└── build/pyinstaller.spec     # packaging config
+├── tools/
+│   ├── generate_logo.py       # regenerates the animated logo (dev-only)
+│   └── generate_icon.py       # regenerates the Windows .ico (dev-only)
+└── build/
+    ├── pyinstaller.spec              # standard build -> dist/FeatherPDF/ (~115MB)
+    ├── pyinstaller-onefile.spec       # single-file build -> dist/FeatherPDF.exe (~52MB)
+    ├── pyinstaller-with-autocrop.spec # standard build, but bundles OpenCV (~200MB)
+    └── installer.iss                  # packages the standard build into Setup.exe (Inno Setup)
 ```
 
 `app/core` never imports from `app/gui` — the PDF logic works standalone
@@ -203,6 +319,47 @@ and is unit-testable without opening a window.
 
 See **[WALKTHROUGH.md](WALKTHROUGH.md)** for a full guided tour of every
 feature with step-by-step instructions and a keyboard shortcut reference.
+
+## Why a build "works here but not on another machine"
+
+Three real issues were found and fixed in this project while getting the
+packaged build solid — worth knowing about even though they're already
+fixed, since the same *categories* of bug are what to check first if a
+build ever misbehaves again:
+
+1. **Sharing the `.exe` alone instead of the whole folder.** By far the
+   most common cause. The onedir build's `.exe` depends on the sibling
+   `_internal/` folder next to it — separate them and it can't launch.
+   Fixed by construction two ways: the installer (previous section)
+   installs everything together, or use `pyinstaller-onefile.spec`
+   instead, which produces one genuinely standalone `.exe` with nothing
+   that can be separated from it.
+2. **Settings written beside the executable instead of the user's
+   profile.** Earlier builds wrote `settings.json` into the install
+   folder itself, which silently fails (or half-fails) if installed to a
+   write-protected location like `Program Files`. Fixed: settings and
+   logs now live in `~/.featherpdf/`, like any well-behaved installed app
+   — verified by actually running the packaged build from a read-only
+   folder and confirming it doesn't crash.
+3. **A dynamically-loaded dependency PyInstaller's static analysis
+   missed.** The read-aloud feature's speech engine (`pyttsx3`) loads its
+   platform driver (`sapi5` on Windows) via `importlib` rather than a
+   plain `import` statement, which PyInstaller can't always trace
+   automatically — it needs to be listed explicitly as a hidden import
+   (already done in `build/pyinstaller.spec`), or a build can work for
+   everything except Read Aloud specifically.
+4. **An optional dependency silently ballooning the "lite" build.**
+   PyInstaller's static analysis finds `import cv2`/`import numpy`
+   statements inside `core/auto_crop.py` regardless of them being lazy,
+   conditional imports — and will bundle the real 90MB+ packages if
+   they're installed on the build machine, which happens automatically if
+   you've locally run `pip install -r requirements-optional.txt` to test
+   Auto-Crop yourself. Measured this directly: the same spec file produced
+   a 304MB build with OpenCV installed locally vs. 114MB without, before
+   `cv2`/`numpy` were added to the spec's explicit excludes list. Fixed —
+   the standard `pyinstaller.spec` now stays lite regardless of what's on
+   your machine; use `pyinstaller-with-autocrop.spec` on purpose if you
+   want OpenCV bundled in.
 
 ## Known limitations
 

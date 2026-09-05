@@ -1,0 +1,10 @@
+# Optional -- only needed for the "Auto-Crop" checkbox in Images to PDF
+# (automatic document-edge detection + perspective correction for photos
+# taken at an angle). The rest of the app works fully without this.
+#
+# Install with:
+#   pip install -r requirements-optional.txt
+#
+# Adds roughly 90MB -- that's why it's kept separate from requirements.txt
+# rather than bundled by default.
+opencv-python-headless>=4.8.0

@@ -27,12 +27,37 @@ a = Analysis(
         ('../assets', 'assets'),
         ('../config', 'config'),
     ],
-    hiddenimports=[],
+    hiddenimports=[
+        # pyttsx3 loads its platform speech driver dynamically at runtime
+        # (importlib, not a plain "import" statement), which PyInstaller's
+        # static analysis can miss -- without these listed explicitly, the
+        # built exe can fail to find the driver on a machine where it wasn't
+        # built, even though `pip install pyttsx3` alone works fine locally.
+        # Windows only needs sapi5, but listing all three keeps this spec
+        # correct regardless of which OS you build it on.
+        'pyttsx3.drivers',
+        'pyttsx3.drivers.sapi5',
+        'pyttsx3.drivers.nsss',
+        'pyttsx3.drivers.espeak',
+    ],
     hookspath=[],
     excludes=[
         'matplotlib', 'numpy', 'scipy', 'pandas',   # not used by this app
         'PyQt5', 'PyQt6', 'PySide2', 'PySide6',     # we use Tkinter only
         'test', 'unittest', 'pydoc_data',
+        # cv2/numpy power the OPTIONAL Auto-Crop feature (see core/auto_crop.py)
+        # and are never imported at module level anywhere in the app -- but
+        # PyInstaller's static analysis finds the "import cv2"/"import numpy"
+        # text inside auto_crop.py's functions regardless of it being a lazy,
+        # conditional import, and will bundle the real packages (91MB+ for
+        # OpenCV alone) if they happen to be installed on the machine doing
+        # the build -- which is exactly what happens if you've locally
+        # installed requirements-optional.txt to test Auto-Crop yourself.
+        # Excluding them here keeps the STANDARD build genuinely lite
+        # regardless of what's on the build machine; see
+        # pyinstaller-with-autocrop.spec for the variant that intentionally
+        # includes them.
+        'cv2', 'opencv_contrib_python', 'opencv_python', 'opencv_python_headless',
     ],
     noarchive=False,
 )
@@ -49,7 +74,7 @@ exe = EXE(
     strip=True,
     upx=True,
     console=False,
-    icon='../assets/icons/logo.png',
+    icon='../assets/icons/icon.ico',
 )
 
 coll = COLLECT(

@@ -133,16 +133,25 @@ again. Windows and macOS have one built in already.
   document is chopped into consecutive chunks of that size, each opening
   as its own tab (`Split_part1.pdf`, `Split_part2.pdf`, ...).
 
-## 8. Converting images to PDF (with scan effects)
+## 8. Converting images to PDF (with scan effects & auto-crop)
 
 - **Tools → Images to PDF...** (or the **Img → PDF** toolbar button).
 - Click **Add Images...**, arrange their order with Move Up/Down.
+- **Auto-Crop** (optional): tick this to automatically detect the
+  document's edges in each photo and straighten it — even if it was
+  photographed at a real angle, not held perfectly flat. If a photo has
+  no clear document edge to find (busy background, edge not visible), that
+  one image is just left as-is rather than risking a bad crop. This
+  checkbox needs OpenCV installed (`pip install -r requirements-optional.txt`)
+  — if it isn't, the checkbox is disabled with a note telling you how.
 - Choose a **Document Style**:
-  - *No effect* — keeps the image exactly as photographed.
+  - *No effect* — keeps the image exactly as photographed (or as auto-cropped).
   - *Color document* — boosts contrast and sharpness, keeps color.
   - *Grayscale document* — same, converted to grayscale.
   - *Black & white scan (CamScanner-style)* — adaptive thresholding for
     that classic high-contrast scanned-page look.
+  - Auto-Crop runs *before* whichever style you pick, so you can combine
+    "straighten the angle" with "make it look like a scan" in one pass.
 - Choose a **Page Size**: match each image's own aspect ratio, or force
   everything onto a fixed A4 page (image centered and scaled to fit).
 - Click **Convert** — opens as a new tab, `Converted.pdf`.
@@ -214,6 +223,12 @@ again. Windows and macOS have one built in already.
 - **Compress shows "0 images touched"**: this is correct if every embedded
   image is already at or below your DPI threshold — there's nothing
   wasteful to shrink.
+- **Auto-Crop checkbox is grayed out**: OpenCV isn't installed — run
+  `pip install -r requirements-optional.txt`, then reopen the dialog.
+- **Auto-Crop left an image untouched**: it couldn't find a confident
+  4-sided document edge in that photo (busy background, edge not
+  visible, etc.) and deliberately left it as-is rather than risk a wrong
+  crop — this is the intended fallback, not a bug.
 - **Print does nothing on Linux**: printing shells out to `lp`; make sure
   a CUPS printer is configured (`lpstat -p` to check).
 - **`pyinstaller: command not found` on Windows** (when building a
@@ -222,6 +237,11 @@ again. Windows and macOS have one built in already.
   instead of the bare `pyinstaller` command — see README.md's build
   section for details (the `--workpath` part avoids a separate issue where
   PyInstaller's own build cache collides with the checked-in spec file).
+- **The built app runs on my machine but not on someone else's**: see
+  README.md's "Why a build works here but not on another machine"
+  section — almost always it's the `.exe` having been separated from its
+  `_internal/` folder. Build the Inno Setup installer (also in README.md)
+  instead of hand-zipping the `dist/` folder and this stops being possible.
 
 ---
 

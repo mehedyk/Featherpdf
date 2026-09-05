@@ -6,11 +6,11 @@ import logging
 import os
 import sys
 
-_LOG_DIR = os.path.join(os.path.expanduser("~"), ".pdf_lite_suite")
+_LOG_DIR = os.path.join(os.path.expanduser("~"), ".featherpdf")
 _LOG_FILE = os.path.join(_LOG_DIR, "app.log")
 
 
-def get_logger(name="pdf_lite_suite"):
+def get_logger(name="featherpdf"):
     logger = logging.getLogger(name)
     if logger.handlers:
         return logger  # already configured

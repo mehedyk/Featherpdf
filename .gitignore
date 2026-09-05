@@ -11,5 +11,14 @@ __pycache__/
 /build/pyinstaller/
 /build/*/
 
+# Inno Setup installer output
+/dist_installer/
+
+# Dev-only generated icon intermediates (regenerate via tools/generate_icon.py)
+# -- kept out of git since assets/icons/icon.ico and icon_512.png are the
+#    checked-in outputs that actually matter; this line is a placeholder in
+#    case future tooling drops temp files alongside them.
+assets/icons/*.tmp
+
 # App's own runtime state (recreated automatically on first launch)
 config/settings.json.bak

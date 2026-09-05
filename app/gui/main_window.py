@@ -12,6 +12,7 @@ from tkinter import ttk, messagebox, simpledialog
 from app.core.document import PDFDocument
 from app.core.merge_split import merge_pdfs, parse_page_range_string
 from app.core.convert import images_to_pdf
+from app.core.auto_crop import OpenCVNotAvailable
 from app.core.compress import compress_pdf, estimate_size_reduction
 from app.core.metadata import get_display_metadata, update_metadata, save_with_password
 from app.core.tts import TextToSpeech, TTS_AVAILABLE
@@ -553,9 +554,14 @@ class MainWindow(tk.Tk):
         MergeDialog(self, confirm)
 
     def open_convert_dialog(self):
-        def confirm(paths, scan_mode, page_size):
+        def confirm(paths, scan_mode, page_size, auto_crop):
             try:
-                result = images_to_pdf(paths, scan_mode=scan_mode, page_size=page_size)
+                result = images_to_pdf(
+                    paths, scan_mode=scan_mode, page_size=page_size, auto_crop=auto_crop,
+                )
+            except OpenCVNotAvailable as e:
+                messagebox.showwarning("Auto-Crop Unavailable", str(e))
+                return
             except Exception as e:
                 messagebox.showerror("Images to PDF", f"Conversion failed:\n{e}")
                 return
@@ -563,7 +569,8 @@ class MainWindow(tk.Tk):
             self.app_state.add_tab(tab)
             self.tab_manager.open_tab(tab)
             self._refresh_sidebars()
-            self._set_status(f"Converted {len(paths)} images to PDF.")
+            crop_note = " (auto-crop applied)" if auto_crop else ""
+            self._set_status(f"Converted {len(paths)} images to PDF{crop_note}.")
         ConvertDialog(self, confirm)
 
     def open_compress_dialog(self):
