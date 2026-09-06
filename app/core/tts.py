@@ -15,8 +15,12 @@ except ImportError:
 
 
 class TextToSpeech:
+    SPEED_STEPS = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
+    BASE_RATE = 175
+
     def __init__(self, rate=175, volume=1.0):
         self.rate = rate
+        self.speed_multiplier = 1.0
         self.volume = volume
         self._engine = None
         self._thread = None
@@ -65,3 +69,22 @@ class TextToSpeech:
 
     def set_rate(self, rate):
         self.rate = rate
+
+    def set_speed_multiplier(self, mult):
+        self.speed_multiplier = round(mult, 2)
+        self.rate = int(self.BASE_RATE * self.speed_multiplier)
+        return self.speed_multiplier
+
+    def slower(self):
+        """Decreases TTS speed to the previous step, returning the new multiplier."""
+        curr = self.speed_multiplier
+        smaller = [s for s in self.SPEED_STEPS if s < curr - 0.01]
+        new_mult = smaller[-1] if smaller else self.SPEED_STEPS[0]
+        return self.set_speed_multiplier(new_mult)
+
+    def faster(self):
+        """Increases TTS speed to the next step, returning the new multiplier."""
+        curr = self.speed_multiplier
+        larger = [s for s in self.SPEED_STEPS if s > curr + 0.01]
+        new_mult = larger[0] if larger else self.SPEED_STEPS[-1]
+        return self.set_speed_multiplier(new_mult)

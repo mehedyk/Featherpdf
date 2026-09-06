@@ -26,14 +26,11 @@ a = Analysis(
         ('../config', 'config'),
     ],
     hiddenimports=[
+        'cv2',
         'pyttsx3.drivers',
         'pyttsx3.drivers.sapi5',
         'pyttsx3.drivers.nsss',
         'pyttsx3.drivers.espeak',
-        # cv2 is intentionally NOT excluded below, but its own optional
-        # GUI-backend extras are still worth excluding explicitly since
-        # this app never opens an OpenCV window -- only uses it for
-        # headless image processing.
     ],
     hookspath=[],
     excludes=[
@@ -45,6 +42,12 @@ a = Analysis(
     ],
     noarchive=False,
 )
+
+# Strip heavy, unused OpenCV video/ffmpeg binaries (saves ~27 MB from build)
+a.binaries = [
+    b for b in a.binaries
+    if not any(v in b[0].lower() for v in ('videoio', 'ffmpeg'))
+]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 

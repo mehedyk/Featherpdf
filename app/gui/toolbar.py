@@ -74,6 +74,10 @@ class Toolbar(FlowToolbar):
         self._btn("🔊 Read Selection", "read_selection", new_group=True)
         self._btn("🔊 Read Page", "read_page")
         self._btn("⏹ Stop", "stop_reading")
+        self._btn("Slower", "tts_slower")
+        self.tts_speed_label = tk.Label(self, text="1.0x", bg=self.bg, width=4)
+        self.add_widget(self.tts_speed_label)
+        self._btn("Faster", "tts_faster")
         self._btn("Copy", "copy_selection")
 
     def _on_fit_selected(self, _event):
@@ -90,3 +94,6 @@ class Toolbar(FlowToolbar):
 
     def update_zoom_label(self, zoom):
         self.zoom_label.configure(text=f"{int(zoom * 100)}%")
+
+    def update_tts_speed_label(self, mult):
+        self.tts_speed_label.configure(text=f"{mult:.2g}x")

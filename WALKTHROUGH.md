@@ -100,6 +100,9 @@ other PDF viewer too.
 
 With the **Select / Copy** tool active (the default), click and drag over
 any text to select it — you'll see it highlighted in blue as you drag.
+Selection follows true document reading order, so dragging across lines
+selects continuously from the start of your drag on line 1 through to the
+end of your drag on line 3.
 
 - **Copy**: `Ctrl+C`, the toolbar's **Copy** button, or right-click → **Copy**.
   The selected text goes straight to your system clipboard — paste it
@@ -108,6 +111,9 @@ any text to select it — you'll see it highlighted in blue as you drag.
   toolbar's **🔊 Read Selection** button. Uses your OS's own speech engine.
 - **Read Page Aloud**: reads the entire current page's text, even without a
   selection — toolbar's **🔊 Read Page** button, or right-click menu.
+- **Slower / Faster Speed**: use the **Slower** and **Faster** toolbar
+  buttons to adjust reading speed from 0.5x to 2.0x (the current multiplier
+  is displayed right on the toolbar).
 - **⏹ Stop**: stops reading at any point.
 - **Right-click menu shortcuts**: while you have a selection, right-clicking
   also offers **Highlight/Underline/Strikeout Selection** directly — no need
@@ -137,13 +143,14 @@ again. Windows and macOS have one built in already.
 
 - **Tools → Images to PDF...** (or the **Img → PDF** toolbar button).
 - Click **Add Images...**, arrange their order with Move Up/Down.
-- **Auto-Crop** (optional): tick this to automatically detect the
-  document's edges in each photo and straighten it — even if it was
-  photographed at a real angle, not held perfectly flat. If a photo has
-  no clear document edge to find (busy background, edge not visible), that
-  one image is just left as-is rather than risking a bad crop. This
-  checkbox needs OpenCV installed (`pip install -r requirements-optional.txt`)
-  — if it isn't, the checkbox is disabled with a note telling you how.
+- **Auto-Crop** (optional): automatically detects the document's edges
+  in each photo and straightens it — even if it was photographed at a real
+  angle, not held flat. Mobile photos are automatically rotated right-side up
+  via EXIF tags. If a photo has no clear document edge to find (busy background,
+  edge not visible), that one image is left as-is rather than risking a bad crop.
+  This checkbox defaults to on whenever OpenCV is installed (or when running
+  the dedicated AutoCrop build) — if OpenCV isn't installed, the checkbox is
+  disabled with a note telling you how.
 - Choose a **Document Style**:
   - *No effect* — keeps the image exactly as photographed (or as auto-cropped).
   - *Color document* — boosts contrast and sharpness, keeps color.
@@ -154,7 +161,8 @@ again. Windows and macOS have one built in already.
     "straighten the angle" with "make it look like a scan" in one pass.
 - Choose a **Page Size**: match each image's own aspect ratio, or force
   everything onto a fixed A4 page (image centered and scaled to fit).
-- Click **Convert** — opens as a new tab, `Converted.pdf`.
+- Click **Convert** — opens as a new tab, `Converted.pdf`, and reports the
+  exact count of auto-cropped images in the status bar.
 
 ## 9. Compressing a PDF
 

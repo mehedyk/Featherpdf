@@ -219,9 +219,8 @@ class ViewerCanvas(tk.Frame):
             self.canvas.delete("selection")
             px0, py0 = self._canvas_to_pdf(*self._drag_start)
             px1, py1 = self._canvas_to_pdf(cx, cy)
-            rect = (min(px0, px1), min(py0, py1), max(px0, px1), max(py0, py1))
             words = self._get_words_for_current_page()
-            hit_words = tex.words_in_rect(words, rect)
+            hit_words = tex.words_in_flow(words, (px0, py0), (px1, py1))
             zoom = self.tab_state.zoom
             for w in hit_words:
                 x0, y0, x1, y1 = w[0] * zoom, w[1] * zoom, w[2] * zoom, w[3] * zoom
@@ -253,9 +252,8 @@ class ViewerCanvas(tk.Frame):
             # finalize the text selection (already drawn live in _on_mouse_drag)
             px0, py0 = self._canvas_to_pdf(*self._drag_start)
             px1, py1 = self._canvas_to_pdf(cx, cy)
-            rect = (min(px0, px1), min(py0, py1), max(px0, px1), max(py0, py1))
             words = self._get_words_for_current_page()
-            hit_words = tex.words_in_rect(words, rect)
+            hit_words = tex.words_in_flow(words, (px0, py0), (px1, py1))
             self.tab_state.selected_words = hit_words
             self.tab_state.selected_text = tex.words_to_text(hit_words)
 
@@ -272,7 +270,7 @@ class ViewerCanvas(tk.Frame):
                 # snap to real text: use exact word quads under the drag if any exist,
                 # otherwise fall back to the dragged rectangle (e.g. marking a diagram)
                 words = self._get_words_for_current_page()
-                hit_words = tex.words_in_rect(words, rect)
+                hit_words = tex.words_in_flow(words, (px0, py0), (px1, py1))
                 if hit_words:
                     quads = [tex.word_rect(w).quad for w in hit_words]
                 else:

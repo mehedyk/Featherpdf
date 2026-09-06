@@ -38,7 +38,7 @@ class ConvertDialog(tk.Toplevel):
         crop_frame = tk.LabelFrame(self, text="Auto-Crop")
         crop_frame.pack(fill="x", padx=10, pady=6)
         self._cv2_ok = auto_crop_available()
-        self.auto_crop_var = tk.BooleanVar(value=False)
+        self.auto_crop_var = tk.BooleanVar(value=self._cv2_ok)
         crop_check = ttk.Checkbutton(
             crop_frame,
             text="Automatically detect & straighten the document's edges (handles angled photos)",

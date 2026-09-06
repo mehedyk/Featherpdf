@@ -68,7 +68,7 @@ cp dist_builds/onefile/FeatherPDF.exe FeatherPDF-Portable.exe
 
 # Asset 3: the autocrop-bundled folder, zipped
 # (PowerShell)
-Compress-Archive -Path dist_builds\autocrop\FeatherPDF -DestinationPath FeatherPDF-AutoCrop.zip
+Compress-Archive -Path dist_builds\autocrop\* -DestinationPath FeatherPDF-AutoCrop.zip
 ```
 
 You should now have three files ready to upload:

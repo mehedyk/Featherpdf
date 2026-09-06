@@ -31,7 +31,7 @@ auto-crop feature. Just a fast, small, no-nonsense PDF app.
 
 ## Download
 
-Prebuilt Windows executables are attached to **[GitHub Releases](https://github.com/mehedyk/Featherpdf/releases/latest)**
+Prebuilt Windows executables are attached to **[GitHub Releases](https://github.com/YOUR-USERNAME/featherpdf/releases/latest)**
 — not committed to this repo directly (large binaries bloat git history
 forever, so they live as release attachments instead; see
 [RELEASING.md](RELEASING.md) if you're maintaining this project and need
@@ -39,14 +39,17 @@ to publish a new one).
 
 | I want... | Download | Size |
 |---|---|---|
-| The easiest install — Start Menu shortcut, uninstaller, the works | **[FeatherPDF-Setup.exe](https://github.com/mehedyk/Featherpdf/releases/latest/download/FeatherPDF-Setup.exe)** | ~114 MB |
-| One single file, no install — just run it | **[FeatherPDF-Portable.exe](https://github.com/mehedyk/Featherpdf/releases/latest/download/FeatherPDF-Portable.exe)** | ~52 MB |
-| Auto-Crop working immediately, no separate setup | **[FeatherPDF-AutoCrop.zip](https://github.com/mehedyk/Featherpdf/releases/latest/download/FeatherPDF-AutoCrop.zip)** | ~300 MB |
+| The easiest install — Start Menu shortcut, uninstaller, the works | **[FeatherPDF-Setup.exe](https://github.com/YOUR-USERNAME/featherpdf/releases/latest/download/FeatherPDF-Setup.exe)** | ~114 MB |
+| One single file, no install — just run it | **[FeatherPDF-Portable.exe](https://github.com/YOUR-USERNAME/featherpdf/releases/latest/download/FeatherPDF-Portable.exe)** | ~52 MB |
+| Auto-Crop working immediately, no separate setup | **[FeatherPDF-AutoCrop.zip](https://github.com/YOUR-USERNAME/featherpdf/releases/latest/download/FeatherPDF-AutoCrop.zip)** | ~180 MB |
 
 Not sure which one? Get **FeatherPDF-Setup.exe** — that's the one most
 people want. See [Auto-Crop](#auto-crop-optional) if you're deciding
 whether you need that third option specifically.
 
+> ⚠️ Replace `YOUR-USERNAME/featherpdf` above with this repo's actual
+> GitHub path before publishing — these links are placeholders until a
+> release actually exists to point at.
 
 ---
 
@@ -102,7 +105,8 @@ either, unless you specifically opt into Auto-Crop.
   (via PyMuPDF's word positions), not just an approximate box
 - **Copy** selected text to the system clipboard (`Ctrl+C`, right-click menu, or toolbar)
 - **Read aloud** 🔊 — speaks the current selection or the whole page out
-  loud, using your OS's own built-in speech engine (no bundled voice model)
+  loud, using your OS's own built-in speech engine (no bundled voice model),
+  with live **Slower / Faster** speed controls (0.5x – 2.0x) directly on the toolbar
 
 ### ✏️ Editing & page operations
 - Delete a page or a page range, insert blank pages, reorder pages (move
@@ -162,14 +166,11 @@ was built and launched to confirm it works:
 |---|---|---|---|
 | `pyinstaller.spec` | `dist/FeatherPDF/` (folder + `.exe`) | **~114 MB** | Default choice — pair with the Inno Setup installer below |
 | `pyinstaller-onefile.spec` | `dist/FeatherPDF.exe` (one file) | **~52 MB** | A single truly independent file — email it, put it on a USB stick, done. Slightly slower to *launch* (silently self-extracts to a temp folder each time you run it) |
-| `pyinstaller-with-autocrop.spec` | `dist/FeatherPDF/` (folder + `.exe`) | **~300 MB** | Same as the default, but bundles OpenCV so Auto-Crop works immediately for whoever you send it to, no separate install needed on their end |
+| `pyinstaller-with-autocrop.spec` | `dist/FeatherPDF/` (folder + `.exe`) | **~179 MB** | Same as the default, but bundles OpenCV (with heavy video extras pruned) so Auto-Crop works immediately for whoever you send it to, no separate install needed on their end |
 
-That ~300MB is bigger than it might look at first glance: OpenCV's wheel
-vendors its shared libraries in a *separate* companion folder alongside
-the main package, which is easy to undercount if you only check the
-main folder's size (a mistake worth naming since it's exactly the one
-made while writing this doc, then caught and corrected by measuring the
-actual built output rather than trusting the package's apparent size).
+That ~179MB includes OpenCV's headless image processing libraries while
+pruning unused video/ffmpeg binaries (`opencv_videoio_ffmpeg*.dll`, saving
+~27MB) to keep the build as lean as possible.
 `requirements-optional.txt` pins an exact OpenCV version specifically so
 this number stays predictable — newer OpenCV releases have shipped
 meaningfully larger, so an unpinned `>=` requirement would make this
@@ -409,15 +410,10 @@ build ever misbehaves again:
 - Continuous-scroll viewing isn't implemented — pages are shown one at a
   time (this keeps memory flat on very large PDFs without a virtualized
   scroll engine, which is a substantial chunk of complexity for a "lite" app).
-- The black-and-white scan effect uses an adaptive-threshold approximation
-  built entirely on Pillow; it does not do automatic edge/corner detection
-  or perspective correction the way OpenCV-based scanner apps do, since
-  OpenCV alone is roughly 3-4x this entire app's footprint.
-- Text selection uses bounding-box overlap (every word whose box the drag
-  touches gets selected), not true multi-line text-flow selection — dragging
-  from the middle of line 1 to the middle of line 3 selects every word the
-  rectangle overlaps rather than "rest of line 1, all of line 2, start of
-  line 3". It covers selecting a word, a line, a sentence, or a block reliably.
+- In the standard build, scan effects use a fast adaptive-threshold approximation
+  built purely on Pillow without bundling OpenCV. Automatic edge detection and
+  perspective straightening are provided by opting into the Auto-Crop feature
+  (or the dedicated AutoCrop build).
 - Read Aloud requires a system speech engine to be present: Windows and macOS
   have one built in; on Linux, install `espeak` (`sudo apt install espeak`)
   if it's not already on your system.

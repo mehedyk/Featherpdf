@@ -16,7 +16,7 @@ Output layout after a full run:
     dist_builds/
         standard/FeatherPDF/       (~115 MB folder)
         onefile/FeatherPDF.exe     (~52 MB single file)
-        autocrop/FeatherPDF/       (~200 MB folder, OpenCV bundled)
+        autocrop/FeatherPDF/       (~179 MB folder, OpenCV bundled, video extras pruned)
 
 Requires PyInstaller (`pip install pyinstaller`). The autocrop variant
 additionally requires OpenCV to be installed in this environment first

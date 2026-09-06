@@ -155,6 +155,8 @@ class MainWindow(tk.Tk):
             "read_selection": self.read_selection_aloud,
             "read_page": self.read_page_aloud,
             "stop_reading": self.stop_reading,
+            "tts_slower": self.tts_slower,
+            "tts_faster": self.tts_faster,
             "copy_selection": self.copy_selection,
         }
         self.toolbar = Toolbar(self, actions)
@@ -433,6 +435,16 @@ class MainWindow(tk.Tk):
         self.tts.stop()
         self._set_status("Stopped reading.")
 
+    def tts_slower(self):
+        new_mult = self.tts.slower()
+        self.toolbar.update_tts_speed_label(new_mult)
+        self._set_status(f"Read-aloud speed: {new_mult:.2g}x")
+
+    def tts_faster(self):
+        new_mult = self.tts.faster()
+        self.toolbar.update_tts_speed_label(new_mult)
+        self._set_status(f"Read-aloud speed: {new_mult:.2g}x")
+
     # ------------------------------------------------------------------
     # page editing
     # ------------------------------------------------------------------
@@ -555,9 +567,17 @@ class MainWindow(tk.Tk):
 
     def open_convert_dialog(self):
         def confirm(paths, scan_mode, page_size, auto_crop):
+            cropped_count = 0
+
+            def on_processed(_idx, _total, cropped):
+                nonlocal cropped_count
+                if cropped:
+                    cropped_count += 1
+
             try:
                 result = images_to_pdf(
                     paths, scan_mode=scan_mode, page_size=page_size, auto_crop=auto_crop,
+                    on_page_processed=on_processed,
                 )
             except OpenCVNotAvailable as e:
                 messagebox.showwarning("Auto-Crop Unavailable", str(e))
@@ -569,7 +589,13 @@ class MainWindow(tk.Tk):
             self.app_state.add_tab(tab)
             self.tab_manager.open_tab(tab)
             self._refresh_sidebars()
-            crop_note = " (auto-crop applied)" if auto_crop else ""
+            if auto_crop:
+                if cropped_count > 0:
+                    crop_note = f" ({cropped_count}/{len(paths)} auto-cropped)"
+                else:
+                    crop_note = " (no document edges detected for auto-crop)"
+            else:
+                crop_note = ""
             self._set_status(f"Converted {len(paths)} images to PDF{crop_note}.")
         ConvertDialog(self, confirm)
 

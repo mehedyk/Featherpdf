@@ -67,36 +67,66 @@ def _require_deps():
 def _order_corners(np, pts):
     """Return corners ordered as top-left, top-right, bottom-right, bottom-left."""
     pts = np.array(pts, dtype="float32")
-    s = pts.sum(axis=1)
-    diff = np.diff(pts, axis=1).reshape(-1)
-    ordered = np.zeros((4, 2), dtype="float32")
-    ordered[0] = pts[np.argmin(s)]       # top-left: smallest x+y
-    ordered[2] = pts[np.argmax(s)]       # bottom-right: largest x+y
-    ordered[1] = pts[np.argmin(diff)]    # top-right: smallest y-x
-    ordered[3] = pts[np.argmax(diff)]    # bottom-left: largest y-x
-    return ordered
+    y_sorted = pts[np.argsort(pts[:, 1])]
+    top = y_sorted[:2]
+    bottom = y_sorted[2:]
+    tl, tr = top[np.argsort(top[:, 0])]
+    bl, br = bottom[np.argsort(bottom[:, 0])]
+    return np.array([tl, tr, br, bl], dtype="float32")
 
 
-def _find_document_corners(cv2, np, gray):
-    """Runs the edge/contour pipeline on an already-grayscale, downscaled image."""
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    edged = cv2.Canny(blurred, 50, 150)
-    edged = cv2.dilate(edged, np.ones((3, 3), np.uint8), iterations=1)
-
-    contours, _ = cv2.findContours(edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+def _extract_corners_from_mask(cv2, np, mask, img_area):
+    """Extract 4-corner document polygon from a binary or edge mask."""
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if not contours:
         return None
 
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:8]
-    img_area = gray.shape[0] * gray.shape[1]
-
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
     for c in contours:
-        peri = cv2.arcLength(c, True)
-        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-        if len(approx) == 4 and cv2.contourArea(approx) > 0.15 * img_area:
-            return approx.reshape(4, 2)
+        area = cv2.contourArea(c)
+        if area < 0.10 * img_area:
+            continue
+
+        # Smooth out folds, indentations, or fingers using convex hull
+        hull = cv2.convexHull(c)
+        peri = cv2.arcLength(hull, True)
+
+        for eps_factor in (0.015, 0.02, 0.03, 0.04, 0.05):
+            approx = cv2.approxPolyDP(hull, eps_factor * peri, True)
+            if len(approx) == 4 and cv2.isContourConvex(approx):
+                return approx.reshape(4, 2)
+
+        # Fallback for documents with rounded corners (cards, notebooks)
+        rect = cv2.minAreaRect(hull)
+        box_area = rect[1][0] * rect[1][1]
+        if box_area > 0 and (area / box_area) > 0.70 and area > 0.15 * img_area:
+            return np.array(cv2.boxPoints(rect), dtype="float32")
 
     return None
+
+
+def _find_document_corners(cv2, np, gray):
+    """Runs edge + morphological and threshold pipelines on grayscale image."""
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    img_area = gray.shape[0] * gray.shape[1]
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+
+    # Try Canny edges with morphological closing to bridge soft edge gaps
+    edged = cv2.Canny(blurred, 50, 150)
+    edged = cv2.morphologyEx(edged, cv2.MORPH_CLOSE, kernel)
+    corners = _extract_corners_from_mask(cv2, np, edged, img_area)
+    if corners is not None:
+        return corners
+
+    # Fallback to Otsu thresholding for high-contrast document boundaries
+    _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+    corners = _extract_corners_from_mask(cv2, np, thresh, img_area)
+    if corners is not None:
+        return corners
+
+    thresh_inv = cv2.bitwise_not(thresh)
+    return _extract_corners_from_mask(cv2, np, thresh_inv, img_area)
 
 
 def detect_and_crop(pil_image: Image.Image):

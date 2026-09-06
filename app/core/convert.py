@@ -7,7 +7,7 @@ the only part of this app that touches OpenCV, and only runs if asked for).
 """
 import io
 import pymupdf
-from PIL import Image
+from PIL import Image, ImageOps
 from app.core.document import PDFDocument
 from app.core.scan_effect import apply_scan_effect, MODE_COLOR
 
@@ -32,6 +32,7 @@ def images_to_pdf(image_paths, output_doc: PDFDocument = None, scan_mode=None,
 
     for i, path in enumerate(image_paths):
         img = Image.open(path)
+        img = ImageOps.exif_transpose(img) or img
         img = img.convert("RGB")
         cropped = False
 
