@@ -31,7 +31,7 @@ auto-crop feature. Just a fast, small, no-nonsense PDF app.
 
 ## Download
 
-Prebuilt Windows executables are attached to **[GitHub Releases](https://github.com/YOUR-USERNAME/featherpdf/releases/latest)**
+Prebuilt Windows executables are attached to **[GitHub Releases](https://github.com/mehedyk/Featherpdf/releases/latest)**
 — not committed to this repo directly (large binaries bloat git history
 forever, so they live as release attachments instead; see
 [RELEASING.md](RELEASING.md) if you're maintaining this project and need
@@ -39,17 +39,14 @@ to publish a new one).
 
 | I want... | Download | Size |
 |---|---|---|
-| The easiest install — Start Menu shortcut, uninstaller, the works | **[FeatherPDF-Setup.exe](https://github.com/YOUR-USERNAME/featherpdf/releases/latest/download/FeatherPDF-Setup.exe)** | ~114 MB |
-| One single file, no install — just run it | **[FeatherPDF-Portable.exe](https://github.com/YOUR-USERNAME/featherpdf/releases/latest/download/FeatherPDF-Portable.exe)** | ~52 MB |
-| Auto-Crop working immediately, no separate setup | **[FeatherPDF-AutoCrop.zip](https://github.com/YOUR-USERNAME/featherpdf/releases/latest/download/FeatherPDF-AutoCrop.zip)** | ~180 MB |
+| The easiest install — Start Menu shortcut, uninstaller, the works | **[FeatherPDF-Setup.exe](https://github.com/mehedyk/Featherpdf/releases/latest/download/FeatherPDF-Setup.exe)** | ~114 MB |
+| One single file, no install — just run it | **[FeatherPDF-Portable.exe](https://github.com/mehedyk/Featherpdf/releases/latest/download/FeatherPDF-Portable.exe)** | ~52 MB |
+| Auto-Crop working immediately, no separate setup | **[FeatherPDF-AutoCrop.zip](https://github.com/mehedyk/Featherpdf/releases/latest/download/FeatherPDF-AutoCrop.zip)** | ~180 MB |
 
 Not sure which one? Get **FeatherPDF-Setup.exe** — that's the one most
 people want. See [Auto-Crop](#auto-crop-optional) if you're deciding
 whether you need that third option specifically.
 
-> ⚠️ Replace `YOUR-USERNAME/featherpdf` above with this repo's actual
-> GitHub path before publishing — these links are placeholders until a
-> release actually exists to point at.
 
 ---
 

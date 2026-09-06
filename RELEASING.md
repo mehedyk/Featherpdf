@@ -94,7 +94,7 @@ gh release create v1.0.0 \
 
 ## 5. Double-check the README's Download links actually work
 
-`README.md`'s Download table uses `YOUR-USERNAME/featherpdf` as a
+`README.md`'s Download table uses `mehedyk/Featherpdf` as a
 placeholder — make sure that's been replaced with this repo's real
 GitHub path (in both the Download section and here in RELEASING.md's
 `gh release create` example, if you copy it). After publishing, click
